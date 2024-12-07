@@ -1,7 +1,13 @@
 pipeline {
     agent any
 
+    enviroonment {
+        NETIFY_SITE_ID = 'f375d829-8d78-4e51-89b4-7d48f65382e8'
+        NETIFY_AUTH_TOKEN = credentials('netlify-token')  
+    }
+
     stages {
+
         stage('Build') {
             agent {
                 docker {
@@ -20,7 +26,7 @@ pipeline {
                 '''
             }
         }
-        
+
         stage('Tests') {
             parallel {
                 stage('Unit tests') {
@@ -44,10 +50,11 @@ pipeline {
                     }
                 }
 
+                /*
                 stage('E2E') {
                     agent {
                         docker {
-                            image 'mcr.microsoft.com/playwright:v1.49.0-jammy'
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                             reuseNode true
                         }
                     }
@@ -61,14 +68,31 @@ pipeline {
                         '''
                     }
 
-                    /*
                     post {
                         always {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
                         }
                     }
-                    */
                 }
+                */
+            }
+        }
+
+        stage('Deploy') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    npm install netlify-cli
+                    node_modules/.bin/netlify --version
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --prod
+
+                '''
             }
         }
     }
