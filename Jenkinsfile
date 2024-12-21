@@ -21,6 +21,8 @@ pipeline {
                     sh '''
                         aws --version
                         aws s3 ls
+                        echo 'Hello S3!' > index.html
+                        aws s3 cp index.html s3://learn-jenkins-21122024/index.html
                     '''
                 }
             }
@@ -95,7 +97,8 @@ pipeline {
                 
             }
         }
-
+        
+        /*
         stage('Deploy staging') {
             agent {
                 docker {
@@ -116,7 +119,7 @@ pipeline {
                 }
             }
         }
-
+        */
         // stage('Staging E2E') {
         //     agent {
         //         docker {
@@ -141,7 +144,7 @@ pipeline {
         //         }
         //     }
         // }
-
+        /*
         stage('Approval') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
@@ -166,6 +169,7 @@ pipeline {
                 '''
             }
         }
+        */
         /*
         stage('Prod E2E') {
             agent {
