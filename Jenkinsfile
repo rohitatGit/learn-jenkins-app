@@ -8,6 +8,24 @@ pipeline {
     }
 
     stages {
+
+        stage('AWS') {
+            agent {
+                docker {
+                    image 'amazon/aws-cli'
+                    args "--entrypoint=''"
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'my-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    sh '''
+                        aws --version
+                        aws s3 ls
+                    '''
+                }
+            }
+        }
+
         stage('Build') {
             agent {
                 docker {
@@ -90,8 +108,8 @@ pipeline {
                     npm install netlify-cli node-jq
                     netlify --version
                     echo "Deploying to staging. Site ID: $NETLIFY_SITE_ID"
-                    netlify status
-                    netlify deploy --dir=build --json > deploy-output.json
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
                 '''
                 script {
                     env.STAGING_URL = sh(script: "node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json", returnStdout: true)
@@ -143,8 +161,8 @@ pipeline {
                 sh '''
                     npm install netlify-cli
                     echo "Deploying to production. Site ID: $NETLIFY_SITE_ID"
-                    netlify status
-                    netlify deploy --dir=build --prod
+                    node_modules/.bin/netlify status
+                    node_modules/.bin/netlify deploy --dir=build --prod
                 '''
             }
         }
