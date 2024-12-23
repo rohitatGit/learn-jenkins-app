@@ -24,6 +24,7 @@ pipeline {
                         aws s3 ls
                         aws s3 sync build s3://learn-jenkins-21122024
                         aws ecs register-task-definition --cli-input-json file://aws/task-definition-prod.json
+                        aws ecs update-service --cluster LearnJenkinsApp-Cluster-RS --service LearnJenkinsApp-service-prod --task-definition LearnJenkinsApp-TaskDefinition-Prod:2
                     '''
                 }
             }
