@@ -5,9 +5,29 @@ pipeline {
         NETLIFY_SITE_ID = 'f375d829-8d78-4e51-89b4-7d48f65382e8'
         NETLIFY_AUTH_TOKEN = credentials('netify-token')
         REACT_APP_VERSION = "1.0.$BUILD_ID"
+        AWS_DEFAULT_REGION = 'us-west-2'
     }
 
     stages {
+        stage('AWS') {
+            agent {
+                docker {
+                    image 'amazon/aws-cli'
+                    reuseNode true
+                    args "--entrypoint=''"
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'my-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    sh '''
+                        aws --version
+                        aws s3 ls
+                        aws s3 sync build s3://learn-jenkins-21122024
+                        aws ecs register-task-definition --cli-input-json file://aws/task-definition-prod.json
+                    '''
+                }
+            }
+        }
 
         stage('Build') {
             agent {
@@ -28,26 +48,8 @@ pipeline {
             }
         }
 
-        stage('AWS') {
-            agent {
-                docker {
-                    image 'amazon/aws-cli'
-                    reuseNode true
-                    args "--entrypoint=''"
-                }
-            }
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'my-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-                    sh '''
-                        aws --version
-                        aws s3 ls
-                        aws s3 sync build s3://learn-jenkins-21122024
-                    '''
-                }
-            }
-        }
-
         stage('Tests') {
+            /*
             parallel {
                 stage('Unit tests') {
                     agent {
@@ -70,7 +72,7 @@ pipeline {
                     }
                 }
                 
-                /*
+                
                 stage('E2E') {
                     agent {
                         docker {
@@ -94,11 +96,10 @@ pipeline {
                     //     }
                     // }
                 }
-                */
-                
             }
+            */
         }
-        
+
         /*
         stage('Deploy staging') {
             agent {
